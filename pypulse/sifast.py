@@ -147,7 +147,6 @@ class SIFAST(PulseBasic):
                         final_config_path = local_config_path
                     else:
                         raise FileNotFoundError(f"Missing config in {folder_path} and no external path provided.")
-
             elif mode_input == "acquire":
                 image_interference = kwargs.pop("image_interference", None)
                 if image_interference is None:
@@ -177,7 +176,13 @@ class SIFAST(PulseBasic):
                     raise ValueError(
                         f"Unexpected keyword arguments for mode_input 'acquire': {', '.join(kwargs.keys())}"
                     )
-                final_config_path = pathlib.Path(__file__).parent.parent / "config"
+                if config_folder_path:
+                    config_folder_path = pathlib.Path(config_folder_path)
+                    if not config_folder_path.exists():
+                        raise FileNotFoundError(f"External config path does not exist: {config_folder_path}")
+                    final_config_path = config_folder_path
+                else:
+                    final_config_path = pathlib.Path(__file__).parent.parent / "config"
 
             self.omega_center = 2 * np.pi * self.SPEED_OF_LIGHT / wavelength_center
             self.n_omega = n_omega
@@ -274,7 +279,8 @@ class SIFAST(PulseBasic):
                 success_message = f"Data processed using config from '{final_config_path}'."
                 update_processing_log(folder_path, "SUCCESS", self.params, success_message)
         except Exception as e:
-            update_processing_log(folder_path, "FAILURE", self.params, str(e))
+            if mode_input == "read":
+                update_processing_log(folder_path, "FAILURE", self.params, str(e))
             raise
 
     def _read_image_from_csv(self, folder_path: str, mode_acquire: str) -> None:
@@ -366,6 +372,37 @@ class SIFAST(PulseBasic):
         )
         _, self.row, self.col = np.where(signal_number[:, np.newaxis, np.newaxis] == self.fiber_number)
         self.pixel_of_signal = pixel_of_signal
+
+    def save_data_to_file(self, folder_path: str, **kwargs) -> None:
+        zero_matrix = np.zeros((2052, 2049))
+        zero_matrix[3, 1:] = self.wavelength
+        image_interference = zero_matrix.copy()
+        image_interference[4:, 1:] = self.image_interference
+        np.savetxt(pathlib.Path(folder_path) / "inter.csv", image_interference, delimiter=",")
+
+        if self.image_unknown is not None:
+            image_unknown = zero_matrix.copy()
+            image_unknown[4:, 1:] = self.image_unknown
+            np.savetxt(pathlib.Path(folder_path) / "unk.csv", image_unknown, delimiter=",")
+
+        if self.image_reference is not None:
+            image_reference = zero_matrix.copy()
+            image_reference[4:, 1:] = self.image_reference
+            np.savetxt(pathlib.Path(folder_path) / "ref.csv", image_reference, delimiter=",")
+
+        config_folder_path = kwargs.pop("config_folder_path", None)
+        if config_folder_path is None:
+            config_folder_path = pathlib.Path(__file__).parent.parent / "config"
+        else:
+            config_folder_path = pathlib.Path(config_folder_path)
+        shutil.copytree(config_folder_path, folder_path / "config")
+        params = self.params
+        del params["wavelength"]
+        del params["image_interference"]
+        del params["image_unknown"]
+        del params["image_reference"]
+        params["folder_path"] = folder_path
+        update_processing_log(folder_path, "SUCCESS", params, "Data saved successfully.")
 
     def plot_scatter(self, values: np.ndarray, scene_model: None | mayavi.core.ui.api.MlabSceneModel = None) -> None:
         if scene_model is None:
