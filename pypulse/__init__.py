@@ -1,13 +1,6 @@
-from .srsi import SRSI
 from .sifast import SIFAST
-from .fiber_array import FiberArray
-from .utils import rescale
+from .srsi import SRSI
+from .utils import reproduce_from_log, rescale
 
-
-__all__ = [
-    "SRSI",
-    "SIFAST",
-    "FiberArray",
-    "rescale"
-]
-__version__ = "0.1.0"
+__all__ = ["SRSI", "SIFAST", "reproduce_from_log", "rescale"]
+__version__ = "0.1.1"

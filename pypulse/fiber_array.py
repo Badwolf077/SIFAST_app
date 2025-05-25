@@ -1,16 +1,18 @@
-from .base import FiberArrayBasic
 import numpy as np
+
+from .base import FiberArrayBasic
+
 
 class FiberArray(FiberArrayBasic):
     def __init__(self, dx: float, dy: float) -> None:
         """Initializes the fiber array with the offset dx and dy."""
-        self._x_axis = (np.arange(14)-13/2) * 1.1 + dx
-        self._y_axis = (np.arange(14)-13/2) * 1.1 + dy
+        self._x_axis = (np.arange(14) - 13 / 2) * 1.1 + dx
+        self._y_axis = (np.arange(14) - 13 / 2) * 1.1 + dy
         self._x_matrix, self._y_matrix = np.meshgrid(self._x_axis, self._y_axis)
-        self._fiber_number = np.reshape(np.arange(14*14), (14, 14))
+        self._fiber_number = np.reshape(np.arange(14 * 14), (14, 14))
         self._number_x = 14
         self._number_y = 14
-        
+
     @property
     def x_axis(self) -> np.ndarray:
         """Returns the x-axis of the fiber array."""
