@@ -390,8 +390,8 @@ class SIFAST(PulseBasic):
         p_initial = (0, 0, 1000, np.nanmin(self.time_interval))
         popt, _ = curve_fit(
             _equation,
-            (self.x_matrix.reval(), self.y_matrix.reval()),
-            self.time_interval.reval(),
+            (self.x_matrix.ravel(), self.y_matrix.ravel()),
+            self.time_interval.ravel(),
             p0=p_initial,
             nan_policy="omit",
         )
