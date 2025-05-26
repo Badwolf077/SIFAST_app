@@ -132,7 +132,7 @@ class SIFAST(PulseBasic):
                     raise ValueError(f"Unexpected keyword arguments for mode_input 'read': {', '.join(kwargs.keys())}")
                 final_config_path = None
                 copy_config_after_processing = False
-                if config_folder_path:
+                if config_folder_path is not None:
                     config_folder_path = pathlib.Path(config_folder_path)
                     local_config_path = pathlib.Path(folder_path) / "config"
                     if local_config_path.exists():
@@ -271,7 +271,9 @@ class SIFAST(PulseBasic):
             self.phase_diff = np.angle(np.exp(1j * (self.phase_diff - phase_sph[:, :, np.newaxis])))
 
             if reference_pulse is not None:
-                pass
+                if not isinstance(reference_pulse, SRSI):
+                    raise TypeError("reference_pulse must be an instance of SRSI")
+                self.compensate_phase(reference_pulse, method_interpolation)
             else:
                 self.phase = self.phase_diff
 
@@ -403,6 +405,21 @@ class SIFAST(PulseBasic):
             "tau0": tau0,
         }
         return reference_parameters
+
+    def compensate_phase(self, reference_pulse: SRSI, method: str) -> None:
+        """
+        Compensates the phase of the SIFAST pulse using a reference pulse.
+
+        Parameters:
+        - reference_pulse: An instance of the SRSI class for reference pulse.
+        """
+        from scipy.interpolate import interp1d
+
+        phase_reference = interp1d(
+            reference_pulse.omega_axis, reference_pulse.phase.squeeze(), fill_value=0, bounds_error=False, kind=method
+        )(self.omega_axis)
+        self.phase = self.phase_diff.copy()
+        self.phase[self.row, self.col, :] = np.angle(np.exp(1j * (self.phase[self.row, self.col, :] + phase_reference)))
 
     def save_data_to_file(self, folder_path: str, **kwargs) -> None:
         zero_matrix = np.zeros((2052, 2049))
