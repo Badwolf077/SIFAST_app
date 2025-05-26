@@ -246,15 +246,15 @@ class SIFAST(PulseBasic):
                 self.Sw_unknown = Su
 
             if as_calibration:
-                rp = {}
-                pass
+                self.rp = self._fit_reference_parameters()
             else:
                 rp_path = final_config_path / "reference_parameters.json"
-                rp = json.load(open(rp_path))
+                self.rp = json.load(open(rp_path))
 
             self.pulse_front_reference = (
-                np.sqrt((self.x_matrix - rp["x0"]) ** 2 + (self.y_matrix - rp["y0"]) ** 2 + rp["L"] ** 2) - rp["L"]
-            ) / (self.SPEED_OF_LIGHT * 1e-6) + rp["tau0"]
+                np.sqrt((self.x_matrix - self.rp["x0"]) ** 2 + (self.y_matrix - self.rp["y0"]) ** 2 + self.rp["L"] ** 2)
+                - self.rp["L"]
+            ) / (self.SPEED_OF_LIGHT * 1e-6) + self.rp["tau0"]
             self.pulse_front = self.pulse_front_reference - self.time_interval
             self.phase_diff = self.phase_diff_with_sphere + self.pulse_front[
                 :, :, np.newaxis
@@ -262,7 +262,9 @@ class SIFAST(PulseBasic):
             phase_sph = (
                 2
                 * np.pi
-                * np.sqrt((self.x_matrix - rp["x0"]) ** 2 + (self.y_matrix - rp["y0"]) ** 2 + rp["L"] ** 2)
+                * np.sqrt(
+                    (self.x_matrix - self.rp["x0"]) ** 2 + (self.y_matrix - self.rp["y0"]) ** 2 + self.rp["L"] ** 2
+                )
                 / wavelength_center
                 * 1e6
             )
@@ -372,6 +374,35 @@ class SIFAST(PulseBasic):
         )
         _, self.row, self.col = np.where(signal_number[:, np.newaxis, np.newaxis] == self.fiber_number)
         self.pixel_of_signal = pixel_of_signal
+
+    def _fit_reference_parameters(self) -> dict:
+        """
+        Finds the reference parameters for the SIFAST pulse by itself.
+        Returns:
+        - A dictionary containing the reference parameters.
+        """
+        from scipy.optimize import curve_fit
+
+        def _equation(M, x0, y0, L, tau0):
+            x, y = M
+            return (np.sqrt((x - x0) ** 2 + (y - y0) ** 2 + L**2) - L) / (self.SPEED_OF_LIGHT * 1e-6) + tau0
+
+        p_initial = (0, 0, 1000, np.nanmin(self.time_interval))
+        popt, _ = curve_fit(
+            _equation,
+            (self.x_matrix.reval(), self.y_matrix.reval()),
+            self.time_interval.reval(),
+            p0=p_initial,
+            nan_policy="omit",
+        )
+        x0, y0, L, tau0 = popt
+        reference_parameters = {
+            "x0": x0,
+            "y0": y0,
+            "L": L,
+            "tau0": tau0,
+        }
+        return reference_parameters
 
     def save_data_to_file(self, folder_path: str, **kwargs) -> None:
         zero_matrix = np.zeros((2052, 2049))
