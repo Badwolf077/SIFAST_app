@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13.3"
 dependencies = [
+    "h5py>=3.13.0",
     "ipykernel>=6.29.5",
     "mayavi>=4.8.3",
     "pandas>=2.2.3",

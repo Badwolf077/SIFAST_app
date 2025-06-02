@@ -1,0 +1,7 @@
+{
+  "type": "rectangular_14x14",
+  "nx": 14,
+  "ny": 14,
+  "spacing": 1.1,
+  "description": "Default 14x14 rectangular array"
+}
