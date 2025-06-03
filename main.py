@@ -62,10 +62,16 @@ def process_from_dir():
 
 
 if __name__ == "__main__":
-    from_log = True
+    from_log = False
+    need_convert = False
+
+    if need_convert:
+        pypulse.io.batch_convert_csv_to_hdf5(root_path="./data")
+
     if from_log:
         pulse = process_from_log()
     else:
         pulse = process_from_dir()
+
     # pulse.plot_scatter(pulse.pulse_front)
     pulse.plot_isosurface(-250, 700, 0, 0.05, opacity=0.9, zoom=None)

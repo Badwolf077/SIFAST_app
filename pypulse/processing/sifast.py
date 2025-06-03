@@ -462,7 +462,7 @@ class SIFAST(PulseBase):
         # Copy configuration
         config_folder_path = kwargs.pop("config_folder_path", None)
         if config_folder_path is None:
-            config_folder_path = Path(__file__).parent.parent.parent / "configs"
+            config_folder_path = Path.cwd() / "config" / "device"
 
         import shutil
 
