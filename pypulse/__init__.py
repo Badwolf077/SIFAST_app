@@ -4,6 +4,7 @@ from . import io
 from .config.settings import ProcessingConfig
 from .fiber.registry import register_fiber_array
 from .processing.sifast import SIFAST
+from .processing.spatial_scan import merge_spatial_scans
 from .processing.srsi import SRSI
 
 __all__ = [
@@ -12,6 +13,7 @@ __all__ = [
     "ProcessingConfig",
     "register_fiber_array",
     "io",
+    "merge_spatial_scans",
 ]
 __version__ = "0.1.2"
 __author__ = "Xu Yilin"
