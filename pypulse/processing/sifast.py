@@ -476,9 +476,9 @@ class SIFAST(PulseBase):
 
         update_processing_log(folder_path, "SUCCESS", params, "Data saved successfully.")
 
-    def plot_scatter(self, values: npt.NDArray[np.float64], scene_model=None) -> None:
+    def plot_scatter(self, values: npt.NDArray[np.float64], scene_model=None, backend: str = "mayavi") -> None:
         """Plot 3D scatter visualization."""
-        visualizer = SIFASTVisualizer(self)
+        visualizer = SIFASTVisualizer(self, backend=backend)
         visualizer.plot_scatter(values, scene_model)
 
     def plot_isosurface(
@@ -489,10 +489,11 @@ class SIFAST(PulseBase):
         isovalue: float,
         indexing: str = "xy",
         scene_model=None,
+        backend: str = "mayavi",
         **kwargs,
     ) -> None:
         """Plot 3D isosurface visualization."""
-        visualizer = SIFASTVisualizer(self)
+        visualizer = SIFASTVisualizer(self, backend=backend)
         visualizer.plot_isosurface(t_min, t_max, frequency_scale, isovalue, indexing, scene_model, **kwargs)
 
     def to_dict(self) -> dict[str, Any]:
